@@ -1,0 +1,28 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build jdprint (GDI+)",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "-g",
+                "-Wall",
+                "-fdiagnostics-color=always",
+                "-municode",
+                "-DUNICODE",
+                "-D_UNICODE",
+                "jdprint.cpp",
+                "-o",
+                "jdprint.exe",
+                "-lgdi32",
+                "-luser32",
+                "-lole32",
+                "-luuid",
+                "-lgdiplus"
+            ],
+            "group": "build",
+            "problemMatcher": ["$gcc"]
+        }
+    ]
+}
