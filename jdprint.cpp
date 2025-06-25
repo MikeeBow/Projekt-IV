@@ -207,7 +207,7 @@ void UpdatePosition(HWND hWnd) {
     // Podnoszenie kwadratów
     if(animState.moveElement && !isPickedUp){
         HDC hdc = GetDC(hWnd);
-        ShapeType detectedShape = GetShapeFromPixelColor(hdc, animState.xPos, animState.yPos + animState.height + 5);
+        ShapeType detectedShape = GetShapeFromPixelColor(hdc, animState.xPos, animState.yPos + animState.height+10); //zabieram +5
         ReleaseDC(hWnd, hdc);
         
         if(currentType == SQUARETYPE && detectedShape == SQUARE){
@@ -233,14 +233,14 @@ void UpdatePosition(HWND hWnd) {
     // Opuszczanie kwadratów
     if(animState.moveElement && isPickedUp){
         HDC hdc = GetDC(hWnd);
-        ShapeType detectedShape = GetShapeFromPixelColor(hdc, animState.xPos, animState.yPos + animState.height + 30);
+        ShapeType detectedShape = GetShapeFromPixelColor(hdc, animState.xPos, animState.yPos + animState.height + 22);
         ReleaseDC(hWnd, hdc);
 
         if(detectedShape == GROUND || detectedShape == SQUARE) {
             std::cout<< detectedShape;
             std::cout << "\n";
-            int newX = animState.xPos - SquareState.width/2 - 1;
-            int newY = animState.yPos + animState.height - 1;
+            int newX = animState.xPos - SquareState.width/2 ;
+            int newY = animState.yPos + animState.height ;
             
             if(!CheckCollision(newX, newY, SquareState.width, SquareState.height, animState.pickedSquareIndex)) {
                 isPickedUp = false;
