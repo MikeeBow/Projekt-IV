@@ -82,7 +82,6 @@ int figureCounter = 0;
 int figurePos[10] = {0};
 bool isPickedUp = false;
 
-// Funkcja sprawdzająca kolizje
 bool CheckCollision(int x, int y, int width, int height, int ignoreIndex = -1) {
     for(int i = 0; i < figureCounter; ++i) {
         if(i == ignoreIndex || whichFigure[i] != 'S') continue;
@@ -92,6 +91,20 @@ bool CheckCollision(int x, int y, int width, int height, int ignoreIndex = -1) {
            y < SquareState.yPos[i] + SquareState.height &&
            y + height > SquareState.yPos[i]) {
             return true;
+        }
+    }
+    return false;
+}
+
+bool CheckLineCollision(int lineX, int lineY, int lineHeight) {
+    for(int i = 0; i < figureCounter; ++i) {
+        if(whichFigure[i] == 'S') {
+            if(lineX < SquareState.xPos[i] + SquareState.width &&
+               lineX + animState.width > SquareState.xPos[i] &&
+               lineY < SquareState.yPos[i] + SquareState.height &&
+               lineY + lineHeight > SquareState.yPos[i]) {
+                return true;
+            }
         }
     }
     return false;
@@ -171,8 +184,15 @@ void OnPaint(HWND hWnd, bool &bulion) {
     SolidBrush mainPartBrush5(MainPartState.color5);
     graphics.FillRectangle(&mainPartBrush5, MainPartState.xPos5, MainPartState.yPos5, MainPartState.width5, MainPartState.height5); 
 
-    SolidBrush mainPartBrush(animState.color);
-    graphics.FillRectangle(&mainPartBrush, animState.xPos, animState.yPos, animState.width, animState.height); 
+    bool lineCollision = CheckLineCollision(animState.xPos, animState.yPos, animState.height);
+    if(lineCollision){
+        animState.speed = 0;
+        animState.height = animState.height - 5;
+    }else{
+        animState.speed = 5;
+    }
+    SolidBrush lineBrush(animState.color);
+    graphics.FillRectangle(&lineBrush, animState.xPos, animState.yPos, animState.width, animState.height); 
 
     SolidBrush mainPartBrushPoint(animState.colorPoint);
     graphics.FillRectangle(&mainPartBrushPoint, animState.xPos, animState.yPos, animState.widthPoint, animState.heightPoint); 
@@ -199,15 +219,26 @@ void OnPaint(HWND hWnd, bool &bulion) {
 }
 
 void UpdatePosition(HWND hWnd) {
-    if (animState.moveUp && animState.height > 20) animState.height -= animState.speed;
-    if (animState.moveDown && animState.height < 380) animState.height += animState.speed;
-    if (animState.moveLeft && animState.xPos > 230) animState.xPos -= animState.speed;
-    if (animState.moveRight && animState.xPos < 600) animState.xPos += animState.speed;
+    int newXPos = animState.xPos;
+    int newHeight = animState.height;
 
-    // Podnoszenie kwadratów
+    if (animState.moveUp && animState.height > 20) newHeight -= animState.speed;
+    if (animState.moveDown && animState.height < 380) newHeight += animState.speed;
+    if (animState.moveLeft && animState.xPos > 230) newXPos -= animState.speed;
+    if (animState.moveRight && animState.xPos < 600) newXPos += animState.speed;
+
+    if (!isPickedUp && !CheckLineCollision(newXPos, animState.yPos, newHeight)) {
+        animState.xPos = newXPos;
+        animState.height = newHeight;
+    }
+    else if (isPickedUp) {
+        animState.xPos = newXPos;
+        animState.height = newHeight;
+    }
+
     if(animState.moveElement && !isPickedUp){
         HDC hdc = GetDC(hWnd);
-        ShapeType detectedShape = GetShapeFromPixelColor(hdc, animState.xPos, animState.yPos + animState.height+10); //zabieram +5
+        ShapeType detectedShape = GetShapeFromPixelColor(hdc, animState.xPos, animState.yPos + animState.height+10);
         ReleaseDC(hWnd, hdc);
         
         if(currentType == SQUARETYPE && detectedShape == SQUARE){
@@ -230,17 +261,15 @@ void UpdatePosition(HWND hWnd) {
         }
     }
 
-    // Opuszczanie kwadratów
     if(animState.moveElement && isPickedUp){
         HDC hdc = GetDC(hWnd);
         ShapeType detectedShape = GetShapeFromPixelColor(hdc, animState.xPos, animState.yPos + animState.height + 22);
         ReleaseDC(hWnd, hdc);
-
-        if(detectedShape == GROUND || detectedShape == SQUARE) {
-            std::cout<< detectedShape;
-            std::cout << "\n";
-            int newX = animState.xPos - SquareState.width/2 ;
-            int newY = animState.yPos + animState.height ;
+        std::cout<<animState.height;
+        std::cout << "\n";
+        if(detectedShape == GROUND || ((detectedShape == SQUARE) && animState.height >= 325)) {
+            int newX = animState.xPos - SquareState.width/2;
+            int newY = animState.yPos + animState.height;
             
             if(!CheckCollision(newX, newY, SquareState.width, SquareState.height, animState.pickedSquareIndex)) {
                 isPickedUp = false;
@@ -251,7 +280,6 @@ void UpdatePosition(HWND hWnd) {
         }
     }
 
-    // Przenoszenie kwadratu
     if(isPickedUp && animState.pickedSquareIndex != -1){
         int newX = animState.xPos - SquareState.width/2;
         int newY = animState.yPos + animState.height;
